@@ -55,6 +55,11 @@ export interface ActionableMessage {
 	commands?: Command[];
 }
 
+export interface ClasspathParams {
+    startupClass: string;
+    projectName?: string;
+}
+
 export namespace StatusNotification {
 	export const type = new NotificationType<StatusReport,void >('language/status');
 }
@@ -73,4 +78,8 @@ export namespace ActionableNotification {
 
 export namespace DebugSessionRequest {
     export const type = new RequestType<string, string, void, void>('java/startDebugSession');
+}
+
+export namespace ClasspathResolveRequest {
+    export const type = new RequestType<ClasspathParams, string, void, void>('java/resolveClasspath');
 }
