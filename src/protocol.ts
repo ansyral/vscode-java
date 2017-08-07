@@ -55,7 +55,7 @@ export interface ActionableMessage {
 	commands?: Command[];
 }
 
-export interface ClasspathParams {
+export interface ClasspathResolveRequestParams {
     startupClass: string;
     projectName?: string;
 }
@@ -81,5 +81,5 @@ export namespace DebugSessionRequest {
 }
 
 export namespace ClasspathResolveRequest {
-    export const type = new RequestType<ClasspathParams, string, void, void>('java/resolveClasspath');
+    export const type = new RequestType<ClasspathResolveRequestParams, string, void, void>('java/resolveClasspaths');
 }
