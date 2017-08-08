@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 
 import { workspace, ExtensionContext, window, StatusBarAlignment, commands, ViewColumn, Uri, CancellationToken, TextDocumentContentProvider, TextEditor, WorkspaceConfiguration, languages, IndentAction, ProgressLocation, Progress } from 'vscode';
 import { LanguageClient, LanguageClientOptions, Position as LSPosition, Location as LSLocation } from 'vscode-languageclient';
-import { runServer, awaitServerConnection } from './javaServerStarter';
+import { runServer, awaitServerConnection, runJavaC } from './javaServerStarter';
 import { Commands } from './commands';
 import { StatusNotification, ClassFileContentsRequest, ProjectConfigurationUpdateRequest, MessageType, ActionableNotification, FeatureStatus, ActionableMessage, DebugSessionRequest, ClasspathResolveRequest, ClasspathResolveRequestParams } from './protocol';
 
@@ -105,6 +105,25 @@ export function activate(context: ExtensionContext) {
 							lastStatus = item.text;
 							resolve();
 							commands.registerCommand(Commands.START_DEBUG_SESSION, async (config) => {
+								if (!config.request) { // if 'request' is missing interpret this as a missing launch.json
+									config.type = 'java';
+									config.name = 'Java Debug';
+									config.request = 'launch';
+									const editor = vscode.window.activeTextEditor;
+									if (editor && editor.document.languageId === 'java') {
+										const fullpath = editor.document.fileName;
+										const cur = path.parse(fullpath).dir;
+										config.startupClass = path.parse(fullpath).base.slice(0, -5);
+										config.sourcePath = [cur];
+										config.cwd = cur;
+										config.stopOnEntry = true;
+										await runJavaC(fullpath, cur).then(function () {
+											config.classpath = cur;
+										}, function (error) {
+											vscode.window.showErrorMessage('Compile file failed. error: ' + error);
+										});
+									}
+								}
 								if (!config.startupClass) {
 									vscode.window.showErrorMessage('Please specify startupClass on launch.json firstly.');
 								} else {
