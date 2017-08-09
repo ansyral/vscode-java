@@ -12,7 +12,7 @@ const glob = require('glob');
 declare let v8debug;
 const DEBUG = (typeof v8debug === 'object') || startedInDebugMode();
 let electron = require('./electron_j');
-let cp = require('child_process');
+const cp = require('child_process');
 
 export function awaitServerConnection(port): Thenable<StreamInfo> {
 	let addr = parseInt(port);
@@ -87,7 +87,7 @@ export function runJavaC(sourcePath, outputPath) {
 				console.log('stderr: ' + data);
 			});
 			childProcess.once('error', function (err) {
-				reject(err);
+				reject(err);				
 			});
 			childProcess.on('exit', function (code) {
 				if (code === 0) {

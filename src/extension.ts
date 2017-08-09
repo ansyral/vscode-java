@@ -117,9 +117,9 @@ export function activate(context: ExtensionContext) {
 										config.sourcePath = [cur];
 										config.cwd = cur;
 										config.stopOnEntry = true;
-										await runJavaC(fullpath, cur).then(function () {
+										await runJavaC(fullpath, cur).then(() => {
 											config.classpath = cur;
-										}, function (error) {
+										}, error => {
 											vscode.window.showErrorMessage('Compile file failed. error: ' + error);
 										});
 									}
