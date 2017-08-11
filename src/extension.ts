@@ -6,9 +6,9 @@ import * as vscode from 'vscode';
 
 import { workspace, ExtensionContext, window, StatusBarAlignment, commands, ViewColumn, Uri, CancellationToken, TextDocumentContentProvider, TextEditor, WorkspaceConfiguration, languages, IndentAction, ProgressLocation, Progress } from 'vscode';
 import { LanguageClient, LanguageClientOptions, Position as LSPosition, Location as LSLocation } from 'vscode-languageclient';
-import { runServer, awaitServerConnection, runJavaC } from './javaServerStarter';
+import { runServer, awaitServerConnection } from './javaServerStarter';
 import { Commands } from './commands';
-import { StatusNotification, ClassFileContentsRequest, ProjectConfigurationUpdateRequest, MessageType, ActionableNotification, FeatureStatus, ActionableMessage, DebugSessionRequest, ClasspathResolveRequest, ClasspathResolveRequestParams } from './protocol';
+import { StatusNotification, ClassFileContentsRequest, ProjectConfigurationUpdateRequest, MessageType, ActionableNotification, FeatureStatus, ActionableMessage, DebugSessionRequest, ClasspathResolveRequest, ClasspathResolveRequestParams, BuildWorkspaceRequest } from './protocol';
 
 let os = require('os');
 let oldConfig;
@@ -117,11 +117,7 @@ export function activate(context: ExtensionContext) {
 										config.sourcePath = [cur];
 										config.cwd = cur;
 										config.stopOnEntry = true;
-										await runJavaC(fullpath, cur).then(() => {
-											config.classpath = cur;
-										}, error => {
-											vscode.window.showErrorMessage('Compile file failed. error: ' + error);
-										});
+										await languageClient.sendRequest(BuildWorkspaceRequest.type, '');
 									}
 								}
 								if (!config.startupClass) {

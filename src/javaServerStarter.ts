@@ -12,7 +12,6 @@ const glob = require('glob');
 declare let v8debug;
 const DEBUG = (typeof v8debug === 'object') || startedInDebugMode();
 let electron = require('./electron_j');
-const cp = require('child_process');
 
 export function awaitServerConnection(port): Thenable<StreamInfo> {
 	let addr = parseInt(port);
@@ -58,48 +57,6 @@ export function runServer(workspacePath, javaConfig): Thenable<StreamInfo> {
 			});
 		});
 	});
-}
-
-export function runJavaC(sourcePath, outputPath) {
-	return requirements.resolveRequirements().catch(error => {
-		//show error
-		window.showErrorMessage(error.message, error.label).then((selection) => {
-			if (error.label && error.label === selection && error.openUrl) {
-				commands.executeCommand(Commands.OPEN_BROWSER, error.openUrl);
-			}
-		});
-		// rethrow to disrupt the chain.
-		throw error;
-	}).then(requirements => {
-		return new Promise(function(resolve, reject) {
-			let child = path.resolve(requirements.java_home + '/bin/javac');
-		    let params = [sourcePath, '-d', path.resolve(outputPath)];
-
-			console.log('Executing ' + child + ' ' + params.join(' '));
-
-			let childProcess = cp.spawn(child, params, {
-				silent: true,
-			});
-			childProcess.stdout.on('data', function (data) {
-				console.log('stdout: ' + data);
-			});
-			childProcess.stderr.on('data', function (data) {
-				console.log('stderr: ' + data);
-			});
-			childProcess.once('error', function (err) {
-				reject(err);				
-			});
-			childProcess.on('exit', function (code) {
-				if (code === 0) {
-					resolve();
-				}
-				else {
-					reject(code);
-				}
-			});
-				
-		});
-	})
 }
 
 function prepareParams(requirements, javaConfiguration, workspacePath) {

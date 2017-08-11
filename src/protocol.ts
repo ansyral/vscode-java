@@ -83,3 +83,7 @@ export namespace DebugSessionRequest {
 export namespace ClasspathResolveRequest {
     export const type = new RequestType<ClasspathResolveRequestParams, string, void, void>('java/resolveClasspaths');
 }
+
+export namespace BuildWorkspaceRequest {
+    export const type = new RequestType<string, string, void, void>('java/buildWorkspace');
+}
