@@ -8,7 +8,7 @@ import { workspace, ExtensionContext, window, StatusBarAlignment, commands, View
 import { LanguageClient, LanguageClientOptions, Position as LSPosition, Location as LSLocation } from 'vscode-languageclient';
 import { runServer, awaitServerConnection } from './javaServerStarter';
 import { Commands } from './commands';
-import { StatusNotification, ClassFileContentsRequest, ProjectConfigurationUpdateRequest, MessageType, ActionableNotification, FeatureStatus, ActionableMessage, DebugSessionRequest, ClasspathResolveRequest, ClasspathResolveRequestParams, BuildWorkspaceRequest } from './protocol';
+import { StatusNotification, ClassFileContentsRequest, ProjectConfigurationUpdateRequest, MessageType, ActionableNotification, FeatureStatus, ActionableMessage, DebugSessionRequest, ClasspathResolveRequest, ClasspathResolveRequestParams, BuildWorkspaceRequest, BuildWorkspaceResult, BuildWorkspaceStatus } from './protocol';
 
 let os = require('os');
 let oldConfig;
@@ -112,12 +112,16 @@ export function activate(context: ExtensionContext) {
 									const editor = vscode.window.activeTextEditor;
 									if (editor && editor.document.languageId === 'java') {
 										const fullpath = editor.document.fileName;
-										const cur = path.parse(fullpath).dir;
-										config.startupClass = path.parse(fullpath).base.slice(0, -5);
+										const cur = path.dirname(fullpath);
+										config.startupClass = path.basename(fullpath, '.java');
 										config.sourcePath = [cur];
 										config.cwd = cur;
 										config.stopOnEntry = true;
-										await languageClient.sendRequest(BuildWorkspaceRequest.type, '');
+										const buildResult = await languageClient.sendRequest(BuildWorkspaceRequest.type, '');
+										if (buildResult.status === BuildWorkspaceStatus.FAILURE) {
+											vscode.window.showErrorMessage('Build failed, please fix build error first.');
+											return;
+										}
 									}
 								}
 								if (!config.startupClass) {

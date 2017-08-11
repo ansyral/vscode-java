@@ -60,6 +60,15 @@ export interface ClasspathResolveRequestParams {
     projectName?: string;
 }
 
+export enum BuildWorkspaceStatus {
+    FAILURE = 0,
+    SUCCESS = 1,
+}
+
+export interface BuildWorkspaceResult {
+    status: BuildWorkspaceStatus;
+}
+
 export namespace StatusNotification {
 	export const type = new NotificationType<StatusReport,void >('language/status');
 }
@@ -85,5 +94,5 @@ export namespace ClasspathResolveRequest {
 }
 
 export namespace BuildWorkspaceRequest {
-    export const type = new RequestType<string, string, void, void>('java/buildWorkspace');
+    export const type = new RequestType<string, BuildWorkspaceResult, void, void>('java/buildWorkspace');
 }
