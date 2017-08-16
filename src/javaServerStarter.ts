@@ -61,6 +61,7 @@ function prepareParams(requirements:RequirementsData, javaConfiguration, workspa
 		params.push('-Dlog.protocol=true');
 		params.push('-Dlog.level=ALL');
 		params.push('-Djdt.ls.debug=true');
+		params.push('-Dlog.dir=' + path.resolve(workspacePath, 'logs'));
 	}
 
 	let vmargs = javaConfiguration.get('jdt.ls.vmargs', '');
