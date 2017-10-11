@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import * as path from "path";
+import * as fs from "fs";
 import * as vscode from "vscode";
 import TelemetryReporter from "vscode-extension-telemetry";
 import * as commands from "./commands";
@@ -34,9 +35,18 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 } else if (config.request === "launch") {
                     if (!config.mainClass) {
-                        vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
-                        return;
-                    } else if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
+                        // try resolve main class
+                        const res = await resolveMainClass(resolvePotentialProjectFiles(), config.projectName);
+                        if (res[0] != null) {
+                            config.mainClass = res[0];
+                            config.projectName = res[1]; 
+                        }
+                        else {
+                            vscode.window.showErrorMessage("Please specify the mainClass in the launch.json.");
+                            return;
+                        }                      
+                    }
+                    if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
                         config.classPaths = await resolveClasspath(config.mainClass, config.projectName);
                     }
                     if (!config.classPaths || !Array.isArray(config.classPaths) || !config.classPaths.length) {
@@ -136,6 +146,10 @@ function resolveClasspath(mainClass, projectName) {
     return executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_CLASSPATH, mainClass, projectName);
 }
 
+function resolveMainClass(projectFiles, projectName) {
+    return executeJavaLanguageServerCommand(commands.JAVA_RESOLVE_MAINCLASS, projectFiles, projectName);
+}
+
 function fetchUsageData() {
     return executeJavaLanguageServerCommand(commands.JAVA_FETCH_USAGE_DATA);
 }
@@ -162,5 +176,33 @@ function convertLogLevel(commonLogLevel: string) {
             return "INFO";
         default:
             return "FINE";
+    }
+}
+
+function resolvePotentialProjectFiles() {
+    let editors = vscode.window.visibleTextEditors.filter(e => e.document.languageId === 'java');
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor.document.languageId === 'java') {
+        const index = editors.indexOf(activeEditor);
+        editors = editors.splice(index, 1);
+        editors = [activeEditor].concat(editors);
+    }
+    if (editors) {
+        let projects = editors.map(e => {
+            const workspaceRoot = vscode.workspace.rootPath;
+            const fullpath = e.document.fileName;
+            let cur = path.dirname(fullpath);
+            while (!fs.existsSync(path.join(cur, ".project"))) {
+                if (path.resolve(cur) === workspaceRoot) {
+                    break;
+                }
+                cur = path.join(cur, '../');
+            }
+            if (fs.existsSync(path.join(cur, ".project"))) {
+                return path.resolve(cur, '.project');
+            }
+            return null;
+        });
+        return projects.filter((elem, pos) => elem !== null && projects.indexOf(elem) == pos);
     }
 }
